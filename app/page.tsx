@@ -2,7 +2,10 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 // @ts-ignore
-import Papa from "papaparse";
+const Papa: {
+  parse: (...args: any[]) => any;
+  unparse?: (...args: any[]) => any;
+} = require("papaparse");
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
