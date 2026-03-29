@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+// @ts-ignore
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
