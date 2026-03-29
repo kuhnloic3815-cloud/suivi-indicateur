@@ -872,7 +872,7 @@ export default function Home() {
   };
 
   const processFactuFile = (file: File) => {
-    Papa.parse<string[]>(file, {
+    Papa.parse(file, {
       header: false,
       delimiter: ";",
       skipEmptyLines: false,
