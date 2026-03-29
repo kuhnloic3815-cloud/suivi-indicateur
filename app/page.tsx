@@ -876,7 +876,7 @@ export default function Home() {
       header: false,
       delimiter: ";",
       skipEmptyLines: false,
-      complete: (results: any) => {
+      complete: (results: Papa.ParseResult<string[]>) => {
         const rows = (results.data as string[][]).map((row) =>
           (row || []).map((cell) => (cell ?? "").toString().trim())
         );
