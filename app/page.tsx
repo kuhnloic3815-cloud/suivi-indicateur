@@ -876,7 +876,7 @@ export default function Home() {
       header: false,
       delimiter: ";",
       skipEmptyLines: false,
-      complete: (results) => {
+      complete: (results: any) => {
         const rows = (results.data as string[][]).map((row) =>
           (row || []).map((cell) => (cell ?? "").toString().trim())
         );
