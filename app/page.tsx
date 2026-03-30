@@ -607,6 +607,7 @@ export default function Home() {
   const [mailCopied, setMailCopied] = useState(false);
   const [originFilterMode, setOriginFilterMode] = useState<OriginFilterMode>("editable");
   const [selectedOrigins, setSelectedOrigins] = useState<string[]>([]);
+  const [detectedOrigins, setDetectedOrigins] = useState<string[]>([]);
   const [billingMonthFilter, setBillingMonthFilter] = useState("Tous");
   const [suppliesMonthFilter, setSuppliesMonthFilter] = useState("Tous");
 
@@ -646,6 +647,7 @@ export default function Home() {
       if (typeof saved.debugHeures === "string") setDebugHeures(saved.debugHeures);
       if (typeof saved.debugCsv === "string") setDebugCsv(saved.debugCsv);
       if (Array.isArray(saved.selectedOrigins)) setSelectedOrigins(saved.selectedOrigins);
+      if (Array.isArray(saved.detectedOrigins)) setDetectedOrigins(saved.detectedOrigins);
       if (typeof saved.billingMonthFilter === "string") setBillingMonthFilter(saved.billingMonthFilter);
       if (typeof saved.suppliesMonthFilter === "string") setSuppliesMonthFilter(saved.suppliesMonthFilter);
       if (typeof saved.selectedSiteKey === "string") setSelectedSiteKey(saved.selectedSiteKey);
@@ -692,6 +694,7 @@ export default function Home() {
         debugHeures,
         debugCsv,
         selectedOrigins,
+        detectedOrigins,
         billingMonthFilter,
         suppliesMonthFilter,
         selectedSiteKey,
@@ -720,6 +723,7 @@ export default function Home() {
     debugHeures,
     debugCsv,
     selectedOrigins,
+    detectedOrigins,
     billingMonthFilter,
     suppliesMonthFilter,
     selectedSiteKey,
@@ -737,13 +741,7 @@ export default function Home() {
     lastHeuresImportAt,
   ]);
 
-  const availableOrigins = useMemo(() => {
-    const allOrigins = [
-      ...data.map((row) => getDisplayOrigine(row.origine)),
-      ...suppliesData.map((row) => getDisplayOrigine(row.origine)),
-    ];
-    return Array.from(new Set(allOrigins)).sort((a, b) => a.localeCompare(b, "fr"));
-  }, [data, suppliesData]);
+  const availableOrigins = detectedOrigins;
 
   const filteredData = useMemo(() => {
     if (selectedOrigins.length === 0) return data;
@@ -826,6 +824,7 @@ export default function Home() {
     setWeeklyData([]);
     setDebugCsv("");
     setSelectedOrigins([]);
+    setDetectedOrigins([]);
     setBillingMonthFilter("Tous");
     setSuppliesMonthFilter("Tous");
     setPuActivite(0);
@@ -854,6 +853,7 @@ export default function Home() {
     setDebugHeures("");
     setDebugCsv("");
     setSelectedOrigins([]);
+    setDetectedOrigins([]);
     setBillingMonthFilter("Tous");
     setSuppliesMonthFilter("Tous");
     setSelectedSiteKey("blayais");
@@ -1079,34 +1079,18 @@ export default function Home() {
             });
         }
 
-        const allActivityOrigins = activityRows
-  .map((row) => {
-    const origine = IDX_ORIGINE >= 0 ? row[IDX_ORIGINE] || "" : "";
-    return getDisplayOrigine(origine);
-  })
-  .filter((origine) => origine && origine !== EMPTY_ORIGIN_LABEL);
+        const normalizedOriginsFromActivityTable = activityRows.map((row) => {
+          const rawOrigine = IDX_ORIGINE >= 0 ? String(row[IDX_ORIGINE] || "").trim() : "";
+          return getDisplayOrigine(rawOrigine);
+        });
 
-const rawOriginsFromActivityTable = activityRows
-  .map((row) => {
-    const rawOrigine = IDX_ORIGINE >= 0 ? String(row[IDX_ORIGINE] || "").trim() : "";
-    return rawOrigine;
-  })
-  .filter((origine) => origine !== "");
-
-const normalizedOriginsFromActivityTable = activityRows.map((row) => {
-  const rawOrigine = IDX_ORIGINE >= 0 ? String(row[IDX_ORIGINE] || "").trim() : "";
-  return getDisplayOrigine(rawOrigine);
-});
-
-const finalOrigins = Array.from(
-  new Set([
-    ...normalizedOriginsFromActivityTable,
-    ...cleanRows.map((row) => getDisplayOrigine(row.origine)),
-    ...fournituresRows.map((row) => getDisplayOrigine(row.origine)),
-  ])
-)
-  .filter((origine) => origine !== "")
-  .sort((a, b) => a.localeCompare(b, "fr"));
+        const finalOrigins = Array.from(
+          new Set([
+            ...normalizedOriginsFromActivityTable,
+            ...cleanRows.map((row) => getDisplayOrigine(row.origine)),
+            ...fournituresRows.map((row) => getDisplayOrigine(row.origine)),
+          ])
+        ).sort((a, b) => a.localeCompare(b, "fr"));
 
         const excludedCount = activityRows.length - cleanRows.length;
 
@@ -1153,6 +1137,7 @@ const finalOrigins = Array.from(
 
         setData(cleanRows);
         setSuppliesData(fournituresRows);
+        setDetectedOrigins(finalOrigins);
         setSelectedOrigins(finalOrigins);
         setBillingMonthFilter("Tous");
         setSuppliesMonthFilter("Tous");
