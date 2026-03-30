@@ -1086,13 +1086,27 @@ export default function Home() {
   })
   .filter((origine) => origine && origine !== EMPTY_ORIGIN_LABEL);
 
+const rawOriginsFromActivityTable = activityRows
+  .map((row) => {
+    const rawOrigine = IDX_ORIGINE >= 0 ? String(row[IDX_ORIGINE] || "").trim() : "";
+    return rawOrigine;
+  })
+  .filter((origine) => origine !== "");
+
+const normalizedOriginsFromActivityTable = activityRows.map((row) => {
+  const rawOrigine = IDX_ORIGINE >= 0 ? String(row[IDX_ORIGINE] || "").trim() : "";
+  return getDisplayOrigine(rawOrigine);
+});
+
 const finalOrigins = Array.from(
   new Set([
-    ...allActivityOrigins,
+    ...normalizedOriginsFromActivityTable,
     ...cleanRows.map((row) => getDisplayOrigine(row.origine)),
     ...fournituresRows.map((row) => getDisplayOrigine(row.origine)),
   ])
-).sort((a, b) => a.localeCompare(b, "fr"));
+)
+  .filter((origine) => origine !== "")
+  .sort((a, b) => a.localeCompare(b, "fr"));
 
         const excludedCount = activityRows.length - cleanRows.length;
 
