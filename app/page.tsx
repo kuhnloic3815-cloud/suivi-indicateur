@@ -1079,12 +1079,20 @@ export default function Home() {
             });
         }
 
-        const finalOrigins = Array.from(
-          new Set([
-            ...cleanRows.map((row) => getDisplayOrigine(row.origine)),
-            ...fournituresRows.map((row) => getDisplayOrigine(row.origine)),
-          ])
-        ).sort((a, b) => a.localeCompare(b, "fr"));
+        const allActivityOrigins = activityRows
+  .map((row) => {
+    const origine = IDX_ORIGINE >= 0 ? row[IDX_ORIGINE] || "" : "";
+    return getDisplayOrigine(origine);
+  })
+  .filter((origine) => origine && origine !== EMPTY_ORIGIN_LABEL);
+
+const finalOrigins = Array.from(
+  new Set([
+    ...allActivityOrigins,
+    ...cleanRows.map((row) => getDisplayOrigine(row.origine)),
+    ...fournituresRows.map((row) => getDisplayOrigine(row.origine)),
+  ])
+).sort((a, b) => a.localeCompare(b, "fr"));
 
         const excludedCount = activityRows.length - cleanRows.length;
 
