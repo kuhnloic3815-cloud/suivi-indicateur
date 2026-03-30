@@ -754,65 +754,84 @@ export default function Home() {
   }, [suppliesData, selectedOrigins]);
 
   const buildWeekly = (
-    factuData: CleanRow[],
-    importedHeures: Record<string, number>
-  ) => {
-    const grouped: Record<string, { depose: number; repose: number; totalBrut: number }> = {};
+  factuData: CleanRow[],
+  importedHeures: Record<string, number>
+) => {
+  const grouped: Record<string, { depose: number; repose: number; totalBrut: number }> = {};
 
-    factuData.forEach((row) => {
-      const weekD = normalizeWeekKey(row.weekDepose);
-      const weekR = normalizeWeekKey(row.weekRepose);
+  // 1) Regroupement des semaines issues de la factu
+  factuData.forEach((row) => {
+    const weekD = normalizeWeekKey(row.weekDepose);
+    const weekR = normalizeWeekKey(row.weekRepose);
 
-      if (row.partDepose > 0 && weekD) {
-        if (!grouped[weekD]) grouped[weekD] = { depose: 0, repose: 0, totalBrut: 0 };
-        grouped[weekD].depose += row.partDepose;
-        grouped[weekD].totalBrut += row.totalUnite;
+    if (row.partDepose > 0 && weekD) {
+      if (!grouped[weekD]) {
+        grouped[weekD] = { depose: 0, repose: 0, totalBrut: 0 };
       }
+      grouped[weekD].depose += row.partDepose;
+      grouped[weekD].totalBrut += row.totalUnite;
+    }
 
-      if (row.partRepose > 0 && weekR) {
-        if (!grouped[weekR]) grouped[weekR] = { depose: 0, repose: 0, totalBrut: 0 };
-        grouped[weekR].repose += row.partRepose;
-        grouped[weekR].totalBrut += row.totalUnite;
+    if (row.partRepose > 0 && weekR) {
+      if (!grouped[weekR]) {
+        grouped[weekR] = { depose: 0, repose: 0, totalBrut: 0 };
       }
+      grouped[weekR].repose += row.partRepose;
+      grouped[weekR].totalBrut += row.totalUnite;
+    }
+  });
+
+  // 2) Normalisation des semaines du pointage
+  const normalizedHeuresMap: Record<string, number> = {};
+  Object.entries(importedHeures).forEach(([key, value]) => {
+    const normalizedKey = normalizeWeekKey(key);
+    if (normalizedKey) {
+      normalizedHeuresMap[normalizedKey] = value;
+    }
+  });
+
+  // 3) Ajout des semaines présentes uniquement dans le pointage
+  Object.keys(normalizedHeuresMap).forEach((week) => {
+    if (!grouped[week]) {
+      grouped[week] = { depose: 0, repose: 0, totalBrut: 0 };
+    }
+  });
+
+  // 4) Construction du tableau final
+  const result: WeeklyRow[] = Object.entries(grouped)
+    .map(([week, val]) => {
+      const normalizedWeek = normalizeWeekKey(week) || week;
+      const heures = normalizedHeuresMap[normalizedWeek] || 0;
+      const totalPondere = round2(val.depose + val.repose);
+
+      // Si pas d'activité mais des heures, on évite une division incohérente
+      const hAct = totalPondere > 0 ? round2(heures / totalPondere) : 0;
+
+      const objectif = objectifValue;
+      const ecart = round2(hAct - objectif);
+      const statut = getStatut(hAct);
+
+      return {
+        semaine: normalizedWeek,
+        depose: round2(val.depose),
+        repose: round2(val.repose),
+        totalPondere,
+        totalBrut: round2(val.totalBrut),
+        heures,
+        hAct,
+        objectif,
+        ecart,
+        statut,
+      };
+    })
+    .sort((a, b) => {
+      const da = getDateFromWeekKey(a.semaine)?.getTime() || 0;
+      const db = getDateFromWeekKey(b.semaine)?.getTime() || 0;
+      return da - db;
     });
 
-    const normalizedHeuresMap: Record<string, number> = {};
-    Object.entries(importedHeures).forEach(([key, value]) => {
-      const normalizedKey = normalizeWeekKey(key);
-      if (normalizedKey) normalizedHeuresMap[normalizedKey] = value;
-    });
-
-    const result: WeeklyRow[] = Object.entries(grouped)
-      .map(([week, val]) => {
-        const normalizedWeek = normalizeWeekKey(week) || week;
-        const heures = normalizedHeuresMap[normalizedWeek] || 0;
-        const totalPondere = round2(val.depose + val.repose);
-        const hAct = totalPondere > 0 ? round2(heures / totalPondere) : 0;
-        const objectif = objectifValue;
-        const ecart = round2(hAct - objectif);
-        const statut = getStatut(hAct);
-
-        return {
-          semaine: normalizedWeek,
-          depose: round2(val.depose),
-          repose: round2(val.repose),
-          totalPondere,
-          totalBrut: round2(val.totalBrut),
-          heures,
-          hAct,
-          objectif,
-          ecart,
-          statut,
-        };
-      })
-      .sort((a, b) => {
-        const da = getDateFromWeekKey(a.semaine)?.getTime() || 0;
-        const db = getDateFromWeekKey(b.semaine)?.getTime() || 0;
-        return da - db;
-      });
-
-    setWeeklyData(result);
-  };
+  setWeeklyData(result);
+};
 
   useEffect(() => {
     buildWeekly(filteredData, heuresMap);
