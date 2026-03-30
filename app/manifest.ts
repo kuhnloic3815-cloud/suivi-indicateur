@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Suivi Indicateur",
     short_name: "Suivi",
-    description: "Suivi chantier",
+    description: "Suivi général des chantiers nucléaires",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",
@@ -18,6 +18,11 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         src: "/icon-512.png",
         sizes: "512x512",
+        type: "image/png",
+      },
+      {
+        src: "/apple-icon.png",
+        sizes: "180x180",
         type: "image/png",
       },
     ],
